@@ -183,8 +183,8 @@ export default function LPM({ APM, amount, currency, country, submitClicked, set
             },
             type: APM.toUpperCase(),
             countryCode: country,
-            returnUrl: `http://localhost:${import.meta.env.VITE_PORT}`,
-            cancelUrl: `http://localhost:${import.meta.env.VITE_PORT}`,
+            returnUrl: `${import.meta.env.VITE_DEPLOY_URL}`,
+            cancelUrl: `${import.meta.env.VITE_DEPLOY_URL}`,
             merchantAccountId: MAID
         };
 
