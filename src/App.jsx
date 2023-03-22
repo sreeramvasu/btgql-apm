@@ -45,6 +45,7 @@ function App() {
     "oxxo": "Oxxo (non-instant)",
     "p24": "P24",
     "satispay": "Satispay",
+    "sepa": "SEPA",
     "sofort": "Sofort",
     "trustly": "Trustly",
     "wechatpay": "Wechatpay"
@@ -148,6 +149,9 @@ function App() {
         break;
       case 'satispay':
         defaultSettings("IT", "EUR", false)
+        break;
+      case 'sepa':
+        defaultSettings("DE", "EUR", false)
         break;
       case 'sofort':
         defaultSettings("NL", "EUR", false)
