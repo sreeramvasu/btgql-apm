@@ -81,27 +81,48 @@ export default function LPM({ APM, amount, currency, country, submitClicked, set
                     console.error("Error creating client:", clientErr);
                     return;
                 }
-                braintree.localPayment.create(
-                    {
-                        client: clientInstance,
-                        merchantAccountId: MAID,
-                    },
-                    function (localPaymentErr, localPaymentInstance) {
-                        if (localPaymentErr) {
-                            console.error(
-                                "Error creating local payment component:",
-                                localPaymentErr
-                            );
-                            return;
+                if(APM === "sepa") {
+                    braintree.sepa.create(
+                        {
+                            client: clientInstance,
+                            merchantId: MAID,
+                        },
+                        function (sepaErr, sepaInstance) {
+                            if (sepaErr) {
+                                console.error(
+                                    "Error creating sepa payment component:",
+                                    sepaErr
+                                );
+                                return;
+                            }
+                            setLPMInstance(sepaInstance);
+                            console.log("sepa payment instance initialized");
                         }
-                        setLPMInstance(localPaymentInstance);
-                        console.log("local payment instance initialized");
-                    }
-                );
+                    );
+                } else {
+                    braintree.localPayment.create(
+                        {
+                            client: clientInstance,
+                            merchantAccountId: MAID,
+                        },
+                        function (localPaymentErr, localPaymentInstance) {
+                            if (localPaymentErr) {
+                                console.error(
+                                    "Error creating local payment component:",
+                                    localPaymentErr
+                                );
+                                return;
+                            }
+                            setLPMInstance(localPaymentInstance);
+                            console.log("local payment instance initialized");
+                        }
+                    );
+                }
             }
         );
     }
 
+    // Sepa integration docs : https://developer.paypal.com/braintree/docs/guides/sepa-direct-debit/overview
     const handleSubmit = () => {
         console.log(`Submitted Details: {
           Payment Method: ${APM},
@@ -116,7 +137,10 @@ export default function LPM({ APM, amount, currency, country, submitClicked, set
 
         //check if APM is instant or non-instant, in case of non instant, directly call the payment context and process the payment
         if (!nonInstant) {
-            processPayment(LPMInstance);
+            if (APM == "sepa") {
+                processSepaPayment(LPMInstance, country, MAID);
+            } else
+                processPayment(LPMInstance);
         } else {
             createAndCaptureNonInstantPayment(APM);
         }
@@ -136,7 +160,7 @@ export default function LPM({ APM, amount, currency, country, submitClicked, set
             url: "https://example.com/my-checkout-page",
         },
         amount: ${amount},
-        currencyCode: ${currency},`)
+        currencyCode: ${currency},`);
         localPaymentInstance.startPayment(
             {
                 paymentType: APM,
@@ -172,6 +196,25 @@ export default function LPM({ APM, amount, currency, country, submitClicked, set
                 setNonce(payload.nonce);
             }
         );
+    }
+
+    const processSepaPayment = (sepaInstance, countryCode, merchantAccountId, e) => {
+        sepaInstance.tokenize({
+            accountHolderName: "John Doe",
+            customerId: "jdoe",
+            iban:"DE06612623458587375350", // example taken from : https://www.iban.com/structure
+            mandateType: "ONE_OFF", // ONE_OFF OR "RECURRENT"
+            merchantAccountId,
+            countryCode
+        }, (tokenizationErr, payload) => {
+            if (tokenizationErr) {
+                console.log(tokenizationErr);
+                return;
+            }
+            //submit nonce to server
+            console.log(payload.nonce);
+            setNonce(payload.nonce);
+        });
     }
 
     const createAndCaptureNonInstantPayment = (APM) => {
@@ -284,4 +327,3 @@ export default function LPM({ APM, amount, currency, country, submitClicked, set
         </>
     )
 }
-
